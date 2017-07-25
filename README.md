@@ -24,3 +24,9 @@ The method for communicating with the ADS131A04 is basically as follows:
 The current prototype board is a breakout for the ADS131A04 with an onboard 3.3V regulator and output reference driver. Data are transacted over SPI. The MISO/MOSI signals must be connected to a microncontroller that can handle at least 16.384MHz clock generation, as the internal oscillator on the ADS131A04 is set to use SCLK as the CLKSRC signal (which is further divided down through the ICLK_DIV bits in the CLK1 register).
 
 Further design iterations will incorporate an onboard ARM processor with a single USB output for data acquisition into a UX. Timing for data acquisition is still in the development process.
+
+
+#### Attributions
+
+- ADS131A04 information by Texas Instruments
+- Brain by Wes Breazell from the Noun Project
