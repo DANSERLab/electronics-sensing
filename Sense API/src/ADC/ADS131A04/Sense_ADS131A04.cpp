@@ -63,66 +63,43 @@ uint32_t parseM(unsigned char BUFFER[3], int SRT) {
   return (STATUS);
 }
 
-void printHex(int num, int precision) {
-     char tmp[16];
-     char format[128];
-
-     sprintf(format, "0x%%.%dX", precision);
-
-     sprintf(tmp, format, num);
-     Serial.print(tmp);
-}
-
-
 
 /* ----------------------- Main External Functions ---------------------------*/
 
-Sense_ADS131A04::Sense_ADS131A04(){
-  union ID_MSB;
-  union F_STAT_1;
-  union F_STAT_P;
-  union F_STAT_N;
-  union F_STAT_S;
-  union F_ERROR_CNT;
-  union F_STAT_M2;
-  union F_CONF_A_SYS_CFG;
-  union F_CONF_D_SYS_CFG;
-  union F_CLK1;
-  union F_CLK2;
-  union F_ADC_ENA;
-  union F_ADC1;
-  union F_ADC2;
-  union F_ADC3;
-  union F_ADC4;
-}
-
-void Sense_ADS131A04::config(
-  union F_ADC_ENA
-){
-
+Sense_ADS131A04::Sense_ADS131A04(uint8_t csPin, uint8_t misoPin, uint8_t mosiPin,\
+   uint8_t sclkPin, uint8_t samplingRate){
+     MOSI = mosiPin;
+     MISO = misoPIN;
+     SCLK = sclkPin;
+     CS   = csPin;
+     SAMPLING_RATE = samplingRate;
+     SPISettings SPI_SETTINGS(SPI_CLOCK_SPEED, MSBFIRST, SPI_MODE1);
 }
 
 void Sense_ADS131A04::setup(){
   Serial.begin(9600);
   Serial.println("Setting up...");
   SPI.begin();
-  //SPI.setClockDivider(SPI_CLOCK_DIV8);
 
-  pinMode(SSP, OUTPUT);
-  pinMode(DRDY, INPUT);
-  delay(1000); // Allow for startup time
-  //adsWriteCommand(UNLOCK, UNLOCK); // Unlock registers for setting WREG if restarting
+  pinMode(CS, OUTPUT);
+
+  delay(10); // Allow for startup time
+
   adsWriteCommand(RESET, READY); // Ensure POR
   adsWriteCommand(UNLOCK, UNLOCK); // Unlock registers for setting WREG
-  adsWriteRegister(0x0B, 0b11101000); // charge pump enable, internal reference enable
-  adsWriteRegister(0x0C, 0b00111100); // Set fixed frame size
-  adsWriteRegister(0x0D, 0b00000010); // Set internal clock to use OSC
-  adsWriteRegister(0x0E, 0b00100000); // Set ICLK divider ratio and OSR
-  adsWriteRegister(0x11, 0b00000100);
-  adsWriteRegister(0x12, 0b00000100);
-  adsWriteRegister(0x13, 0b00000100);
-  adsWriteRegister(0x14, 0b00000100);
-}
+
+  // Default hardware register settings
+  adsWriteRegister(A_SYS_CFG, A_SYS_CFG_DEFAULT);
+  adsWriteRegister(D_SYS_CFG, D_SYS_CFG_DEFAULT);
+  adsWriteRegister(CLK1, CLK1_DEFAULT);
+  adsWriteRegister(CLK2, CLK2_DEFAULT);
+  adsWriteRegister(ADC_ENA, ADC_ENA_DEFAULT);
+  adsWriteRegister(ADC_1, ADC_1_DEFAULT);
+  adsWriteRegister(ADC_2, ADC_2_DEFAULT);
+  adsWriteRegister(ADC_3, ADC_3_DEFAULT);
+  adsWriteRegister(ADC_4, ADC_4_DEFAULT);
+
+  }
 
 void Sense_ADS131A04::adsWriteCommand(uint32_t COMMAND, uint32_t STATUS) {
   unsigned char SND_BUF[3];
@@ -130,9 +107,6 @@ void Sense_ADS131A04::adsWriteCommand(uint32_t COMMAND, uint32_t STATUS) {
   uint32_t RETURNED_STATUS = 0x00;
 
   Serial.println(); // Newline for serial monitor cleanliness
-
-  // Begin SPI transaction using designated settings
-
 
   // Rerun transaction if status not received
   while (RETURNED_STATUS != STATUS) {
@@ -150,7 +124,7 @@ void Sense_ADS131A04::adsWriteCommand(uint32_t COMMAND, uint32_t STATUS) {
     parseM(SND_BUF, SENT); // Parse received message
 
     // Enable ~CS then transfer I/O buffer, get response
-    SPI.beginTransaction(SPISettings(SPI_CLOCK_SPEED, MSBFIRST, SPI_MODE1));
+    SPI.beginTransaction(SPI_SETTINGS);
     digitalWrite(SSP, LOW);
     SPI.transfer(&SND_BUF, 3);
     digitalWrite(SSP, HIGH);
@@ -183,7 +157,7 @@ void Sense_ADS131A04::adsReadRegister(){
   Serial.println(REG_ADDRESS, HEX);
   uint32_t FORMATTED_RREG_COMMAND = ((0b001 << 13) | (REG_ADDRESS << 8)) & 0xFFFF00;
 
-  SPI.beginTransaction(SPISettings(SPI_CLOCK_SPEED, MSBFIRST, SPI_MODE1));
+  SPI.beginTransaction(SPI_SETTINGS);
   SND_BUF[0] = (FORMATTED_RREG_COMMAND >> 8) & 0xFF;
   SND_BUF[1] = FORMATTED_RREG_COMMAND & 0xFF;
   SND_BUF[2] = 0x00;
@@ -215,7 +189,7 @@ void Sense_ADS131A04::adsSample(){
   }
   //Serial.println("DRDY");
   // Begin SPI transaction using designated settings
-  SPI.beginTransaction(SPISettings(SPI_CLOCK_SPEED, MSBFIRST, SPI_MODE1));
+  SPI.beginTransaction(SPI_SETTINGS);
   digitalWrite(SSP, LOW);
   SPI.transfer(&SND_BUF, BUF_SIZE);
   digitalWrite(SSP, HIGH);
