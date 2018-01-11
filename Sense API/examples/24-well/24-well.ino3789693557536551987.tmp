@@ -9,7 +9,7 @@ const uint8_t SCLK_PIN = 13;
 // CS and DRDY pins are unique to 
 
 uint8_t CS_1 = 4, CS_2 = 5, CS_3 = 6, CS_4 = 7;
-uint8_t DRDY_1 = 14, DRDY_2 = 15, DRDY_3 = 16, DRDY_4 = 17;
+uint8_t DRDY_1 = 21, DRDY_2 = 22, DRDY_3 = 23, DRDY_4 = 24;
 uint32_t sampleCount = 0;
 
 
@@ -22,7 +22,7 @@ Sense_ADS131A04 AFE4(4, CS_4, MISO_PIN, MOSI_PIN, SCLK_PIN, DRDY_4);
 
 void setup() {
   
-  Serial.begin(19200);
+  Serial.begin(9600);
   SPI.begin();
   // Double check values
 
@@ -39,6 +39,7 @@ void setup() {
   AFE4.configure();
   Serial.println("---------------AFE 4 Configuration---------------"); 
   
+  Serial.println("---------------Waking Up---------------");
   AFE1.wakeUp();
   AFE2.wakeUp();
   AFE3.wakeUp();
@@ -48,8 +49,8 @@ void setup() {
 
 // the loop routine runs over and over again forever:
 void loop() {
+  Serial.print(" ");
   AFE1.adsSample();
-  delay(10);
-
+  delay(100);
+  //sampleCount++;
 }
-

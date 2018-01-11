@@ -1,0 +1,44 @@
+#include "Sense_ADS131A04.h"
+
+// MISO, MOSI, and SCLK pins are shared between AFEs
+
+const uint8_t MISO_PIN = 13;
+const uint8_t MOSI_PIN = 14;
+const uint8_t SCLK_PIN = 20;
+
+// CS and DRDY pins are unique to 
+
+uint8_t CS_1 = 6, CS_2 = 7, CS_3 = 8, CS_4 = 9;
+uint8_t DRDY_1 = 21, DRDY_2 = 22, DRDY_3 = 23, DRDY_4 = 24;
+
+void setup() {
+  Serial.begin(9600);
+  SPI.begin();
+  
+  // Setup for 24 well version
+    
+  Sense_ADS131A04 AFE1(1, CS_1, MISO_PIN, MOSI_PIN, SCLK_PIN, DRDY_1);
+  Sense_ADS131A04 AFE2(2, CS_2, MISO_PIN, MOSI_PIN, SCLK_PIN, DRDY_2);
+  Sense_ADS131A04 AFE3(3, CS_3, MISO_PIN, MOSI_PIN, SCLK_PIN, DRDY_3);
+  Sense_ADS131A04 AFE4(4, CS_4, MISO_PIN, MOSI_PIN, SCLK_PIN, DRDY_4);
+
+  // Double check values
+
+  AFE1.displayInfo();
+  AFE2.displayInfo();
+  AFE3.displayInfo();
+  AFE4.displayInfo();
+  
+  pinMode(13, OUTPUT);
+
+  AFE1.configure();
+}
+
+// the loop routine runs over and over again forever:
+void loop() {
+  digitalWrite(13, HIGH);   // turn the LED on (HIGH is the voltage level)
+  delay(50);               // wait for a second
+  digitalWrite(13, LOW);    // turn the LED off by making the voltage LOW
+  delay(50);
+    
+}

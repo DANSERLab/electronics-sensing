@@ -1,3 +1,6 @@
+#ifndef Sense_ADS131A04_H
+#define Sense_ADS131A04_H
+
 #include <Stdio.h>
 #include <SPI.h>
 /* ----------------------- DEVICE REGISTERS ----------------------------------*/
@@ -10,7 +13,7 @@
 #define STAT_S    0x05
 #define ERROR_CNT 0x06
 #define STAT_M2   0x07
-#define A_SYS_CFG 0x0A
+#define A_SYS_CFG 0x0B
 #define D_SYS_CFG 0x0C
 #define CLK1      0x0D
 #define CLK2      0x0E
@@ -31,9 +34,11 @@
 
 /* ----------------------- SPI CONFIG ----------------------------------------*/
 
-int SPI_CLOCK_SPEED 2000000
+#define SPI_CLOCK_SPEED 2000000
 #define SENT 1
 #define RECEIVED 0
+
+const SPISettings SPI_SETTINGS(SPI_CLOCK_SPEED, MSBFIRST, SPI_MODE1);
 
 // Command List for ADS131A04
 
@@ -87,14 +92,23 @@ enum ADS_GAIN{
 /*============================================================================*/
 
 class Sense_ADS131A04{
-  public:
-
   private:
+    ADS_GAIN GAIN1, GAIN2, GAIN3, GAIN4;
+    uint8_t ID, csPin, misoPin, mosiPin, sclkPin, drdyPin;
+    
+  public:
+    Sense_ADS131A04(const uint8_t _ID, const uint8_t _csPin, const uint8_t _misoPin, const uint8_t _mosiPin, const uint8_t _sclkPin, const uint8_t _drdyPin);
+    
     void configure();
     void adsWriteCommand(uint32_t COMMAND, uint32_t STATUS);
-    void adsReadRegister();
+    void adsWriteRegister(unsigned char REG_ADDRESS, uint32_t REG_DATA);
+    void adsReadRegister(unsigned char REG_ADDRESS);
     void adsSample();
-    ADS_GAIN GAIN1, GAIN2, GAIN3, GAIN4;
-    uint8_t csPin, misoPin, mosiPin, sclkPin, samplingRate;
-      SPISettings SPI_SETTINGS(SPI_CLOCK_SPEED, MSBFIRST, SPI_MODE1);
+    void displayInfo();
+
 };
+
+#endif
+
+
+

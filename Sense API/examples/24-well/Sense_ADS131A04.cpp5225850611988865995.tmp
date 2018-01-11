@@ -15,91 +15,97 @@ uint32_t parseM(unsigned char BUFFER[3], int SRT) {
       break;
   }
 
-  //printhex(STATUS, 4);
-  Serial.print(" = ");
-
   // Decode cases and determine returned STATUS messages
   switch (STATUS) {
     case 0x0000:
-      Serial.println("NULL");
+      Serial.print("NULL ");
       break;
     case 0x0011:
-      Serial.println("RESET");
-      break;
-    case 0xFF82:
-      Serial.println("RESETTING...");
+      Serial.print("RESET ");
       break;
     case 0xFF04:
-      Serial.println("READY");
+      Serial.print("READY ");
       break;
     case 0x0022:
-      Serial.println("STANDBY...");
+      Serial.print("STANDBY ");
       break;
     case 0x0033:
-      Serial.println("WAKING UP...");
+      Serial.print("WAKING UP ");
       break;
     case 0x0555:
-      Serial.println("LOCKED");
+      Serial.print("LOCKED ");
       break;
     case 0x0655:
-      Serial.println("UNLOCKED");
+      Serial.print("UNLOCK ");
       break;
 
     default:
       //If none of these, check R/W REG
       switch ((STATUS & 0xE000) >> 13) {
         case 0b010:
-          Serial.println("WREG SENT");
+          Serial.print("WREG\t");
           break;
         case 0b001:
-          Serial.println("RREG");
+          Serial.print("RREG\t");
           break;
         default:
-          Serial.println("STATUS ERROR");
+          Serial.print("STATUS ERROR");
           break;
       }
       break;
   }
+  Serial.print("\t");
+  Serial.println(STATUS, HEX);
   return (STATUS);
 }
 
 
 /* ----------------------- Main External Functions ---------------------------*/
-void Sense_ADS131A04::Sense_ADS131A04(){
-     SPISettings SPI_SETTINGS(SPI_CLOCK_SPEED, MSBFIRST, SPI_MODE1);
+Sense_ADS131A04::Sense_ADS131A04(const uint8_t _ID, const uint8_t _csPin, const uint8_t _misoPin, const uint8_t _mosiPin, const uint8_t _sclkPin, const uint8_t _drdyPin){
+  ID = _ID;
+  csPin = _csPin;
+  misoPin = _misoPin;
+  mosiPin = _mosiPin;
+  sclkPin = _sclkPin;
+  drdyPin = _drdyPin;
+}
+
+void Sense_ADS131A04::displayInfo(){
+  char cbuff[32];
+  Serial.print("AFE Status for Well #");
+  Serial.println(ID);
+  sprintf(cbuff, "CS[%d] MISO[%d] MOSI[%d] SCLK[%d] DRDY[%d]\n", csPin, misoPin, mosiPin, sclkPin, drdyPin);
+  Serial.println(cbuff);
 }
 
 void Sense_ADS131A04::configure(){
-  Serial.begin(9600);
-  Serial.println("Setting up...");
-  SPI.begin();
+  Serial.print("---------------Setting up Well #");
+  Serial.print(ID);
+  Serial.println("---------------");
+  pinMode(csPin, OUTPUT);
 
-  pinMode(CS, OUTPUT);
-
-  delay(10); // Allow for startup time
-
+  delay(100); // Allow for startup time
+  adsWriteCommand(UNLOCK, UNLOCK); // Unlock registers for setting WREG
   adsWriteCommand(RESET, READY); // Ensure POR
   adsWriteCommand(UNLOCK, UNLOCK); // Unlock registers for setting WREG
 
   // Default hardware register settings
-  adsWriteRegister(A_SYS_CFG, A_SYS_CFG_DEFAULT);
-  adsWriteRegister(D_SYS_CFG, D_SYS_CFG_DEFAULT);
-  adsWriteRegister(CLK1, CLK1_DEFAULT);
-  adsWriteRegister(CLK2, CLK2_DEFAULT);
-  adsWriteRegister(ADC_ENA, ADC_ENA_DEFAULT);
-  adsWriteRegister(ADC1, ADC1_DEFAULT);
-  adsWriteRegister(ADC2, ADC2_DEFAULT);
-  adsWriteRegister(ADC3, ADC3_DEFAULT);
-  adsWriteRegister(ADC4, ADC4_DEFAULT);
-
-  }
+  adsWriteRegister(A_SYS_CFG, A_SYS_CFG_DEFAULT); //0B
+  adsWriteRegister(D_SYS_CFG, D_SYS_CFG_DEFAULT); //0C
+  adsWriteRegister(CLK1, CLK1_DEFAULT);           //0D
+  adsWriteRegister(CLK2, CLK2_DEFAULT);           //0E
+  adsWriteRegister(ADC1, ADC1_DEFAULT);           //11
+  adsWriteRegister(ADC2, ADC2_DEFAULT);           //12
+  adsWriteRegister(ADC3, ADC3_DEFAULT);           //13
+  adsWriteRegister(ADC4, ADC4_DEFAULT);           //14
+  adsWriteRegister(ADC_ENA, ADC_ENA_DEFAULT);     //0F
+  Serial.println("Configuration Complete");
+}
 
 void Sense_ADS131A04::adsWriteCommand(uint32_t COMMAND, uint32_t STATUS) {
   unsigned char SND_BUF[3];
   unsigned char REC_BUF[3];
   uint32_t RETURNED_STATUS = 0x00;
-
-  Serial.println(); // Newline for serial monitor cleanliness
 
   // Rerun transaction if status not received
   while (RETURNED_STATUS != STATUS) {
@@ -118,36 +124,32 @@ void Sense_ADS131A04::adsWriteCommand(uint32_t COMMAND, uint32_t STATUS) {
 
     // Enable ~CS then transfer I/O buffer, get response
     SPI.beginTransaction(SPI_SETTINGS);
-    digitalWrite(SSP, LOW);
+    digitalWrite(csPin, LOW);
     SPI.transfer(&SND_BUF, 3);
-    digitalWrite(SSP, HIGH);
+    digitalWrite(csPin, HIGH);
 
-    digitalWrite(SSP, LOW);
+    digitalWrite(csPin, LOW);
     SPI.transfer(&REC_BUF, 3);
-    digitalWrite(SSP, HIGH);
+    digitalWrite(csPin, HIGH);
 
     // Response is given to message on subsequent data frame
     SPI.endTransaction();
     RETURNED_STATUS = parseM(REC_BUF, RECEIVED);
+    delay(10);
   }
+}
 
 void Sense_ADS131A04::adsWriteRegister(unsigned char REG_ADDRESS, uint32_t REG_DATA){
-  Serial.print("\nWriting Register ");
-  Serial.print(REG_ADDRESS, HEX);
-  Serial.print(" with data ");
 
   // Ensure register message is in format 0b010a aaaa nnnn nnnn with reg address a* and data n*
   uint32_t FORMATTED_WREG_COMMAND = ((0b010 << 13) | (REG_ADDRESS << 8) | (REG_DATA & 0xFF)) & 0xFFFFFF;
-  Serial.print(REG_DATA, BIN);
   uint32_t EXPECTED_STATUS = (0b001 << 13) | (REG_ADDRESS << 8) | (REG_DATA & 0xFF);
   adsWriteCommand(FORMATTED_WREG_COMMAND, EXPECTED_STATUS);
 }
 
-void Sense_ADS131A04::adsReadRegister(){
+void Sense_ADS131A04::adsReadRegister(unsigned char REG_ADDRESS){
   unsigned char REC_BUF[3] = {0x00, 0x00, 0x00};
   unsigned char SND_BUF[3];
-  Serial.print("\nReading Register ");
-  Serial.println(REG_ADDRESS, HEX);
   uint32_t FORMATTED_RREG_COMMAND = ((0b001 << 13) | (REG_ADDRESS << 8)) & 0xFFFF00;
 
   SPI.beginTransaction(SPI_SETTINGS);
@@ -158,19 +160,32 @@ void Sense_ADS131A04::adsReadRegister(){
 
   // Enable ~CS then transfer I/O buffer, get response
 
-  digitalWrite(SSP, LOW);
+  digitalWrite(csPin, LOW);
   SPI.transfer(&SND_BUF, 3);
-  digitalWrite(SSP, HIGH);
+  digitalWrite(csPin, HIGH);
 
-  digitalWrite(SSP, LOW);
+  digitalWrite(csPin, LOW);
   SPI.transfer(&REC_BUF, 3);
-  digitalWrite(SSP, HIGH);
+  digitalWrite(csPin, HIGH);
   SPI.endTransaction();
   parseM(REC_BUF, RECEIVED);
+}
 
+void Sense_ADS131A04::wakeUp(){
+  Serial.print("---------------Waking up Well #");
+  Serial.print(ID);
+  Serial.println("---------------");
+  delay(10);
+  adsWriteRegister(ADC_ENA, 0b00001111);
+  delay(10);
+  adsWriteCommand(WAKEUP, WAKEUP);
+  delay(10);
+  adsWriteCommand(LOCK, LOCK);
+  delay(10);
 }
 
 void Sense_ADS131A04::adsSample(){
+
   uint8_t BUF_SIZE = 15;
   unsigned char SND_BUF[BUF_SIZE];
   long CH1, CH2, CH3, CH4;
@@ -180,18 +195,15 @@ void Sense_ADS131A04::adsSample(){
   for(i = 0; i < BUF_SIZE; i++){
     SND_BUF[i] = 0x00;
   }
-  //Serial.println("DRDY");
   // Begin SPI transaction using designated settings
+  SPI.begin();
   SPI.beginTransaction(SPI_SETTINGS);
-  digitalWrite(SSP, LOW);
+  digitalWrite(csPin, LOW);
   SPI.transfer(&SND_BUF, BUF_SIZE);
-  digitalWrite(SSP, HIGH);
+  digitalWrite(csPin, HIGH);
 
   SPI.endTransaction();
-
-  /*for(i = 0; i < BUF_SIZE; i++){
-    Serial.print(SND_BUF[i], HEX);
-  }*/
+  
   CH1 = (SND_BUF[3] << 16) | (SND_BUF[4] << 8) | SND_BUF[5];
   CH2 = (SND_BUF[6] << 16) | (SND_BUF[7] << 8) | SND_BUF[8];
   CH3 = (SND_BUF[9] << 16) | (SND_BUF[10] << 8) | SND_BUF[11];
@@ -210,8 +222,14 @@ void Sense_ADS131A04::adsSample(){
     CH4 |= 0xFF000000 ;
   }
 
-  CH1_f = (CH1 / 16777216.0) * (4.80000);
-  CH2_f = (CH2 / 16777216.0) * (4.80000);
-  CH3_f = CH3 * (2* 2.40000 / 16777216);
-  CH4_f = CH4 * (2* 2.40000 / 16777216);
+  CH1_f = (CH1 / 3495253.33);
+  CH2_f = (CH2 / 3495253.33);
+  CH3_f = (CH3 / 3495253.33);
+  CH4_f = (CH4 / 3495253.33);
+
+  Serial.print(CH1_f, 24); Serial.print(" ");
+  Serial.print(CH2_f, 24); Serial.print(" ");
+  Serial.print(CH3_f, 24); Serial.print(" ");
+  Serial.print(CH4_f, 24); Serial.println( );
 }
+

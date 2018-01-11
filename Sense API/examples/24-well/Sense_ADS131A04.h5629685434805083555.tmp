@@ -57,6 +57,10 @@ const SPISettings SPI_SETTINGS(SPI_CLOCK_SPEED, MSBFIRST, SPI_MODE1);
 #define CLK1_DEFAULT      0b00000010
 #define CLK2_DEFAULT      0b00100000
 #define ADC_ENA_DEFAULT   0b00000000
+#define ADC1_DEFAULT      0b00000000
+#define ADC2_DEFAULT      0b00000000
+#define ADC3_DEFAULT      0b00000000
+#define ADC4_DEFAULT      0b00000000
 
 enum ADS_OSR{
   OSR_4096  = 0x0,
@@ -77,11 +81,11 @@ enum ADS_OSR{
   OSR_32    = 0xF
 };
 
-#define GAIN_1  0b00000000
-#define GAIN_2  0b00000001
-#define GAIN_4  0b00000010
-#define GAIN_8  0b00000011
-#define GAIN_16 0b00000100
+#define  GAIN_1 0x0
+#define  GAIN_2 0x1
+#define GAIN_4  0x2
+#define  GAIN_8 0x3
+#define GAIN_16 0x4
   
 /*============================================================================*/
 
@@ -99,12 +103,11 @@ class Sense_ADS131A04{
     void adsSample();
     void displayInfo();
     void wakeUp();
-    void setGain(uint8_t gainSetting);
+    void setGain();
 
 };
 
 #endif
-
 
 
 

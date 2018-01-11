@@ -94,10 +94,10 @@ void Sense_ADS131A04::configure(){
   adsWriteRegister(D_SYS_CFG, D_SYS_CFG_DEFAULT); //0C
   adsWriteRegister(CLK1, CLK1_DEFAULT);           //0D
   adsWriteRegister(CLK2, CLK2_DEFAULT);           //0E
-  adsWriteRegister(ADC1, GAIN_16);                 //11
-  adsWriteRegister(ADC2, GAIN_16);                 //12
-  adsWriteRegister(ADC3, GAIN_16);                 //13
-  adsWriteRegister(ADC4, GAIN_16);                 //14
+  adsWriteRegister(ADC1, ADC1_DEFAULT);           //11
+  adsWriteRegister(ADC2, ADC2_DEFAULT);           //12
+  adsWriteRegister(ADC3, ADC3_DEFAULT);           //13
+  adsWriteRegister(ADC4, ADC4_DEFAULT);           //14
   adsWriteRegister(ADC_ENA, ADC_ENA_DEFAULT);     //0F
   Serial.println("Configuration Complete");
 }
@@ -135,7 +135,7 @@ void Sense_ADS131A04::adsWriteCommand(uint32_t COMMAND, uint32_t STATUS) {
     // Response is given to message on subsequent data frame
     SPI.endTransaction();
     RETURNED_STATUS = parseM(REC_BUF, RECEIVED);
-    delay(20);
+    delay(10);
   }
 }
 
@@ -171,25 +171,18 @@ void Sense_ADS131A04::adsReadRegister(unsigned char REG_ADDRESS){
   parseM(REC_BUF, RECEIVED);
 }
 
-void Sense_ADS131A04::setGain(uint8_t gainSetting){
-  adsWriteCommand(ADC1, gainSetting);
-  adsWriteCommand(ADC2, gainSetting);
-  adsWriteCommand(ADC3, gainSetting);
-  adsWriteCommand(ADC4, gainSetting);
-}
-
 void Sense_ADS131A04::wakeUp(){
-  Serial.print("---------------Waking up AFE #");
-  Serial.print(ID);
-  Serial.println("---------------");
   delay(100);
   adsWriteRegister(ADC_ENA, 0b00001111);
+  delay(100);
   adsWriteCommand(WAKEUP, WAKEUP);
+  delay(100);
   adsWriteCommand(LOCK, LOCK);
+  delay(100);
 }
 
 void Sense_ADS131A04::adsSample(){
-
+  Serial.println("test");
   uint8_t BUF_SIZE = 15;
   unsigned char SND_BUF[BUF_SIZE];
   long CH1, CH2, CH3, CH4;
@@ -200,7 +193,6 @@ void Sense_ADS131A04::adsSample(){
     SND_BUF[i] = 0x00;
   }
   // Begin SPI transaction using designated settings
-  SPI.begin();
   SPI.beginTransaction(SPI_SETTINGS);
   digitalWrite(csPin, LOW);
   SPI.transfer(&SND_BUF, BUF_SIZE);
@@ -231,7 +223,9 @@ void Sense_ADS131A04::adsSample(){
   CH3_f = (CH3 / 3495253.33);
   CH4_f = (CH4 / 3495253.33);
 
-  Serial.println(CH1_f, 24);
+  Serial.print(CH1_f, 24); Serial.print(" ");
+  Serial.print(CH2_f, 24); Serial.print(" ");
+  Serial.print(CH3_f, 24); Serial.print(" ");
+  Serial.print(CH4_f, 24); Serial.println( );
 }
-
 
