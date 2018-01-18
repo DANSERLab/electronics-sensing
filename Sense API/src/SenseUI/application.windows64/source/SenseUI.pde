@@ -16,14 +16,22 @@ color randColor;
 String sampleArray[];
 String sampleString;
 
-int samplePeriod = 10; //ms
+int samplePeriod = 10;
 
+CallbackListener cb;
 
 public void setup() {
   frameRate(200);
   size(1000, 1000);
   background(bgColor);
   noStroke();
+  
+  cb = new CallbackListener() {
+    public void controlEvent(CallbackEvent theEvent) {
+      println(theEvent.getController().getId());
+      }
+    };
+
   
     
   filePath = "/data/data.txt";
@@ -35,7 +43,6 @@ public void setup() {
 
   println("Initializing backend");
   thread("portConstructor");
-
 
 }
 
@@ -49,7 +56,7 @@ void draw() {
     fill(color(255));
     textSize(30);
     textAlign(CENTER, CENTER);
-    text("Searching for COM Port", width/2, height/2);
+    text("Searching for COM Port", width/2, height-25);
   }
 }
 
