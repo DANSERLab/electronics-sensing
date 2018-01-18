@@ -1,0 +1,12 @@
+import processing.sound.*;
+
+FFT fft_o;
+Chart fftChart;
+AudioIn fft_in;
+int bands = 512;
+float[] spectrum = new float[bands];
+
+void fftDraw(float dataVal) {
+  fft.analyze(spectrum);
+  fftChart.push("fftStream",spectrum);
+}

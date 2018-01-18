@@ -1,0 +1,60 @@
+import ddf.minim.*;
+import ddf.minim.analysis.*;
+import ddf.minim.effects.*;
+import ddf.minim.signals.*;
+import ddf.minim.spi.*;
+import ddf.minim.ugens.*;
+
+FFT fft;
+float[] dataF;
+float[] fftOutput;
+int fs = 250;
+int L = 256;
+float T = 1.0f/ fs;
+
+PImage logo;
+int logoS = 200;
+PFont p1, p2, mbFont;
+
+int bufferCount = 0;
+float fftRandFreq;
+
+Chart fftChart;
+
+public void setup() {
+  frameRate(30);
+  size(1000, 1000);
+  background(bgColor);
+  noStroke();
+
+  p1 = createFont("Arial", 20); 
+  mbFont = createFont("Arial", 12);
+  
+  mainPanel = new MainPanel(this);
+
+
+
+void draw() {
+  drawUI();
+}
+
+void drawUI() {
+  mainPanel.draw();
+}
+
+void startRecording() {
+  RECORDING = true;
+  fileOutput.print("#");
+  for (int i = 1; i < numAFEs+1; i++) {
+    for (int j = 1; j < numChannels+1; j++) {
+      fileOutput.print("AFE" + str(i) + "_" + str(j) + "\t");
+    }
+  }
+  fileOutput.println();
+}
+
+void stopRecording() {
+  fileOutput.flush();
+  fileOutput.close();
+  RECORDING = false;
+}

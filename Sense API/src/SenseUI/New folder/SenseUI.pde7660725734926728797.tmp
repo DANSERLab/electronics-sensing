@@ -1,0 +1,98 @@
+import processing.serial.*;
+import toxi.util.events.*;
+
+PFont p1, p2, mbFont;
+
+Serial cPort;
+int comPort;
+
+int sTimeKey, dTimeKey;
+boolean RUNNING;
+
+DemoEventBroadcaster ticker;
+BgUpdater bg;
+
+
+
+public void setup() {
+  frameRate(200);
+  size(1000, 1000);
+  background(bgColor);
+  noStroke();
+
+  bg = new BgUpdater();
+  ticker = newDemoEventBroadcaster(1);
+
+  ticker.dispatcher.addListener(bg);
+
+
+  comPort = findPort();
+  cPort = new Serial(this, Serial.list()[comPort], 192000);
+
+  p1 = createFont("Arial", 20); 
+  mbFont = createFont("Arial", 12);
+
+  mainPanel = new MainPanel(this);
+  RUNNING = true;
+}
+
+void draw() {
+}
+
+interface bgListener {
+  void tick();
+}
+
+class bgUpdater implements bgListener {
+  {
+    dTimeKey = 0;
+    sTimeKey = 0;
+    void tick() {
+      if (millis() - dTimeKey >= 30) {
+        dTimeKey = millis();
+        redraw();
+      }
+      if (millis() - sTimeKey >= 5) {
+        getSamples();
+        sTimeKey = millis();
+      }
+    }
+  }
+
+
+
+  int findPort() {
+    println("Searching for available com port from list:");
+    println(Serial.list());
+    for (int i = 0; i < Serial.list().length; i++) {
+      if (Serial.list()[i] != null) {
+        println("\n\n\n\n" + "Connected to " + Serial.list()[i]);
+        return(i);
+      }
+    }
+    delay(1);
+    findPort();
+    return(0);
+  }
+
+  void startRecording() {
+    println(filePath);
+    if (filePath == null) {
+      println("Make sure to set a file output!");
+      selectOutput("Select a file to write to:", "fileSelected");
+    }
+    RECORDING = true;
+    fileOutput.print("#" + " t ");
+    for (int i = 1; i < numAFEs+1; i++) {
+      for (int j = 1; j < numChannels+1; j++) {
+        fileOutput.print("AFE" + str(i) + "_" + str(j) + "\t");
+      }
+    }
+    fileOutput.println();
+  }
+
+  void stopRecording() {
+    fileOutput.flush();
+    fileOutput.close();
+    RECORDING = false;
+  }

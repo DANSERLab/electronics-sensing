@@ -88,6 +88,7 @@ enum ADS_OSR{
 class Sense_ADS131A04{
   private:
     uint8_t ID, csPin, misoPin, mosiPin, sclkPin, drdyPin;
+    float CH1_f, CH2_f, CH3_f, CH4_f;
     
   public:
     Sense_ADS131A04(const uint8_t _ID, const uint8_t _csPin, const uint8_t _misoPin, const uint8_t _mosiPin, const uint8_t _sclkPin, const uint8_t _drdyPin);

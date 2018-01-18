@@ -6,10 +6,7 @@ const uint8_t MISO_PIN = 12;
 const uint8_t MOSI_PIN = 11;
 const uint8_t SCLK_PIN = 13;
 
-int incomingByte;
-int i;
-
-// CS and DRDY pins are unique to
+// CS and DRDY pins are unique to 
 
 uint8_t CS_1 = 4, CS_2 = 5, CS_3 = 6, CS_4 = 7;
 uint8_t DRDY_1 = 14, DRDY_2 = 15, DRDY_3 = 16, DRDY_4 = 17;
@@ -26,8 +23,8 @@ Sense_ADS131A04 AFE4(4, CS_4, MISO_PIN, MOSI_PIN, SCLK_PIN, DRDY_4);
 
 
 void setup() {
-
-  Serial.begin(9600);
+  
+  Serial.begin(19200);
   SPI.begin();
   // Double check values
 
@@ -37,41 +34,32 @@ void setup() {
   AFE2.displayInfo();
   AFE2.configure();
   Serial.println("---------------AFE 2 Configuration---------------");
-  AFE3.displayInfo();
+  AFE3.displayInfo(); 
   AFE3.configure();
-  Serial.println("---------------AFE 3 Configuration---------------");
+  Serial.println("---------------AFE 3 Configuration---------------"); 
   AFE4.displayInfo();
   AFE4.configure();
-  Serial.println("---------------AFE 4 Configuration---------------");
-
+  Serial.println("---------------AFE 4 Configuration---------------"); 
+  
   AFE1.wakeUp();
   AFE2.wakeUp();
   AFE3.wakeUp();
   AFE4.wakeUp();
   Serial.println("---------------Setup Complete---------------");
-  Serial.flush();
 }
 
 // the loop routine runs over and over again forever:
 void loop() {
-  if (Serial.available() > 0) {
-    incomingByte = Serial.read();
-    if ( incomingByte == 83) {
-      generateOutputArray();
-    } else {
-      Serial.println(incomingByte);
-    }
-  }
+  generateOutputArray();
+  delay(1);
+
 }
 
-void generateOutputArray() {
+void generateOutputArray(){
   AFE1.adsSample();
-  Serial.print(",");
   AFE2.adsSample();
-  Serial.print(",");
   AFE3.adsSample();
-  Serial.print(",");
   AFE4.adsSample();
-  Serial.print("|");
+  Serial.println();
 }
 
