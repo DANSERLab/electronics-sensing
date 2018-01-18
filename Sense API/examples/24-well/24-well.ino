@@ -30,19 +30,19 @@ void setup() {
   Serial.begin(9600);
   SPI.begin();
   // Double check values
-
+  Serial.println("---------------AFE 1 Configuration---------------");
   AFE1.displayInfo();
   AFE1.configure();
-  Serial.println("---------------AFE 1 Configuration---------------");
+  Serial.println("---------------AFE 2 Configuration---------------");
   AFE2.displayInfo();
   AFE2.configure();
-  Serial.println("---------------AFE 2 Configuration---------------");
+  Serial.println("---------------AFE 3 Configuration---------------");
   AFE3.displayInfo();
   AFE3.configure();
-  Serial.println("---------------AFE 3 Configuration---------------");
+  Serial.println("---------------AFE 4 Configuration---------------");
   AFE4.displayInfo();
   AFE4.configure();
-  Serial.println("---------------AFE 4 Configuration---------------");
+  
 
   AFE1.wakeUp();
   AFE2.wakeUp();
@@ -74,4 +74,5 @@ void generateOutputArray() {
   AFE4.adsSample();
   Serial.print("|");
 }
+
 

@@ -189,7 +189,6 @@ void Sense_ADS131A04::wakeUp(){
 }
 
 void Sense_ADS131A04::adsSample(){
-  char cbuff[32];
   uint8_t BUF_SIZE = 15;
   unsigned char SND_BUF[BUF_SIZE];
   long CH1, CH2, CH3, CH4;
@@ -225,13 +224,19 @@ void Sense_ADS131A04::adsSample(){
     CH4 |= 0xFF000000 ;
   }
 
-  CH1_f = (CH1 / 3495253.33);
-  CH2_f = (CH2 / 3495253.33);
-  CH3_f = (CH3 / 3495253.33);
-  CH4_f = (CH4 / 3495253.33);
+  CH1_f = (CH1 / 3495253.3333333);
+  CH2_f = (CH2 / 3495253.3333333);
+  CH3_f = (CH3 / 3495253.3333333);
+  CH4_f = (CH4 / 3495253.3333333);
 
-  sprintf(cbuff, "%.5f,%.5f,%.5f,%.5f", CH1_f, CH2_f, CH3_f, CH4_f);
-  Serial.print(cbuff);
+  Serial.print(CH1_f, 24);
+  Serial.print(",");
+  Serial.print(CH2_f, 24);
+  Serial.print(",");
+  Serial.print(CH3_f, 24);
+  Serial.print(",");
+  Serial.print(CH4_f, 24);
 }
+
 
 
